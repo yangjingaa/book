@@ -19,6 +19,10 @@ npm run build --report
 ```
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+#mongodb 安装
+
+https://www.jianshu.com/p/4bda3b7a9ea6
+
 
 #启动
 
