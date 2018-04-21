@@ -44,6 +44,16 @@ https://blog.csdn.net/zhalcie2011/article/details/71750915
 
 http://element-cn.eleme.io/#/zh-CN 饿了么 vue 组件库
 
+#导出数据库
+mongoimport -h 127.0.0.1 --port 27017 -d teacher --file d:\data\teachers
+
+--file 导入文件
+
+#导入数据库
+mongorestore -h 127.0.0.1:27017 -d sport --drop d:\data\sport
+
+-h端口号 -d 数据库名字 --drop 数据库存在路径
+
 
 
 
