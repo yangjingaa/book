@@ -194,6 +194,7 @@ router.get('/course', function (req, res) {
         var id = query.teacherId;
         query.teacherId = {$in: id}
     }
+    // populate({path:'teacherId studentsId',select:"name _id"})
     Course.find(query).populate("teacherId studentsId").limit(5).sort(sort).exec(function (err, doc) {
         console.log(err);
         res.json({

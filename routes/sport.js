@@ -4,6 +4,9 @@ var tools = require("../public/message/tools");
 var codeStatus = require("../public/message/code-status");
 var sportUser=require("../models/sport/user");
 var Equipment=require("../models/sport/equipment");
+var Reserves=require("../models/sport/reserves");
+
+var  managerId="5add6ece1e1136149c2aac7b";
 
 /**
  * 登录
@@ -89,6 +92,17 @@ router.post('/register', function(req, res) {
 
 router.post("/addEquipment",function (req,res) {
     var query=tools.changeQuery(req.body);
+    var isAdmin=query.isAdmin;
+    if(isAdmin!==1||!isAdmin){
+        res.json({
+            status:codeStatus.fail,
+            data:[],
+            message:"无权限操作"
+        });
+        res.end();
+    };
+    //删除权限判断key
+    delete query.isAdmin;
     var name={name:query.name};
     Equipment.find(name,function (err, doc) {
         if(err){
@@ -121,6 +135,40 @@ router.post("/addEquipment",function (req,res) {
 });
 
 /**
+ * 更新器材信息
+ */
+router.post("/editEquipment",function (req,res) {
+    var query=tools.changeQuery(req.body);
+    var isAdmin=query.isAdmin;
+    if(isAdmin!==1||!isAdmin){
+        res.json({
+            status:codeStatus.fail,
+            data:[],
+            message:"无权限操作"
+        });
+        res.end();
+    };
+    //删除权限判断key
+    delete query.isAdmin;
+    Equipment.update({_id:query._id},query,function (err, doc) {
+        if(err){
+            res.json({
+                status:codeStatus.fail,
+                data:[],
+                message:"错误"
+            });
+            res.end();
+        }else {
+            res.json({
+                status:codeStatus.suc,
+                data:doc,
+                message:"更新数据成功"
+            })
+        }
+    })
+});
+
+/**
  * 获取健身器材数据
  */
 router.get("/getEquipment",function (req,res) {
@@ -141,6 +189,85 @@ router.get("/getEquipment",function (req,res) {
            })
         }
     })
+});
+
+/**
+ * 删除设备
+ */
+router.post("/deleteEquipment",function (req,res) {
+    var query=tools.changeQuery(req.body);
+
+    Equipment.remove(query,function (err, doc) {
+        if(err){
+            res.json({
+                status:codeStatus.fail,
+                data:[],
+                message:"错误"
+            });
+            res.end();
+        }else {
+            res.json({
+                status:codeStatus.suc,
+                data:[],
+                message:"删除成功"
+            });
+            res.end();
+        }
+    })
+});
+
+/**
+ * 添加预约设备
+ */
+router.post("/addReverse",function (req,res) {
+    var query=tools.changeQuery(req.body);
+    var viaQuery={
+        userId:query.userId,
+        equId:query.equId,
+    };
+    var equQuery={
+        _id:query.equId,
+    };
+
+    Reserves.find(viaQuery,function (err, doc) {
+       if(err){
+           res.json({
+               status:codeStatus.fail,
+               data:[],
+               message:"错误"
+           });
+           res.end();
+       } else {
+           if(doc.length>0){
+               res.json({
+                   status:codeStatus.fail,
+                   data:[],
+                   message:"没人每天，只能预约一次"
+               });
+               res.end();
+           }else {
+               Equipment.update(equQuery,{$inc:{"reserveCount":1}}).exec(function (err, doc) {
+                   if(err){
+                       res.json({
+                           status:codeStatus.fail,
+                           data:[],
+                           message:"增加失败"
+                       });
+                       res.end();
+                   }else {
+                       Reserves.create(query,function (err, doc) {
+                           res.json({
+                               status:codeStatus.suc,
+                               data:[],
+                               message:"预约成功"
+                           });
+                           res.end();
+                       })
+                   }
+               });
+           }
+       }
+    });
 });
 
 
