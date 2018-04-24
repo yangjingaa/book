@@ -389,10 +389,10 @@ router.post("/cancelRes", function (req, res) {
 /**
  * 获得会员卡
  */
-router.get("/getCard", function (req, res) {
-    var query = tools.changeQuery(req.query);
+router.post("/getCard", function (req, res) {
+    var query = tools.changeQuery(req.body);
     if (query._id) {
-        if (query._id == 123) {
+        if (query._id === 123) {
             res.json({
                 status: codeStatus.suc,
                 data: [],
@@ -405,7 +405,6 @@ router.get("/getCard", function (req, res) {
     }
     var sort = "-crateTime";
     IdCard.find(query).sort(sort).exec(function (err, doc) {
-        console.log(err);
         if (err) {
             res.json({
                 status: codeStatus.fail,
@@ -529,7 +528,7 @@ router.post("/buyCards", function (req, res) {
         } else {
             var rest = doc[0].vipCard;
             var result = rest.some(function (value) {
-                return parseInt(value) === parseInt(query.vipCard)
+                return value === query.vipCard
             });
             if (result) {
                 res.json({
