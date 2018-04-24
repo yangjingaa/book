@@ -5,6 +5,7 @@ var dbSport=require('../sportConnect');
 var Reserves = new Schema({
     "userId":String,
     "equId":{type:Schema.Types.ObjectId,ref:"equipments"},
+
     "name":String,
     "startTime":String,
     "endTime":String,
