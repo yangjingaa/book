@@ -4,11 +4,11 @@ var dbSport=require('../sportConnect');
 
 var Reserves = new Schema({
     "userId":String,
-    "equId":String,
+    "equId":{type:Schema.Types.ObjectId,ref:"equipments"},
     "name":String,
     "startTime":String,
     "endTime":String,
-    "time":{type:Date,default:new Date().getTime()}
+    "time":{type:String,default:new Date().getTime()}
 });
 
 module.exports = dbSport.model("reserves", Reserves);
