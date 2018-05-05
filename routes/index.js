@@ -8,7 +8,7 @@ var Course = require("../models/teacher/course");
 var Student = require("../models/teacher/student");
 var Warning = require("../models/teacher/warning");
 
-var adminId = "5ad5fca38035fe33e861b3b9";//管理员id
+var adminId = "5ad5fca38035fe33e861b3b9"; //管理员id
 /**
  * 登录
  */
@@ -16,7 +16,9 @@ router.post('/login', function (req, res) {
     var query = {
         userName: req.body.userName,
         pwd: req.body.pwd,
-        isAdmin:{$ne:100}
+        isAdmin: {
+            $ne: 100
+        }
     };
     User.find(query, function (err, doc) {
         if (err) {
@@ -26,7 +28,7 @@ router.post('/login', function (req, res) {
             });
             res.end()
         } else {
-            if (doc.length > 0 ) {
+            if (doc.length > 0) {
                 res.json({
                     status: codeStatus.suc,
                     data: doc,
@@ -57,11 +59,7 @@ router.post('/register', function (req, res) {
     };
     User.find(query, function (err, doc) {
         if (err) {
-            res.json({
-                status: codeStatus.fail,
-                message: "错误"
-            });
-            res.end()
+            tools.returnResultFaile(res, "错误")
         }
         if (doc.length === 0) {
             var user = new User({
@@ -70,19 +68,10 @@ router.post('/register', function (req, res) {
                 name: req.body.name,
             });
             user.save(function (err, doc) {
-                res.json({
-                    status: codeStatus.suc,
-                    message: "成功",
-                    data: []
-                });
-                res.end()
+                tools.returnResultSuccess(res, doc, "成功")
             })
         } else {
-            res.json({
-                status: codeStatus.fail,
-                message: "用户名存在"
-            });
-            res.end()
+            tools.returnResultFaile(res, "用户名存在")
         }
     });
 
@@ -93,25 +82,26 @@ router.post('/register', function (req, res) {
  */
 router.get('/teacher', function (req, res) {
     var query = tools.changeQuery(req.body);
-    teachers.find(query).populate({path:'_id',select:"isAdmin",match:{"isAdmin":{$ne:100}}}).exec(function (err, doc) {
+    query.isTeacher = 1;
+    teachers.find(query).populate({
+        path: '_id',
+        select: "isAdmin",
+        match: {
+            "isAdmin": {
+                $ne: 100
+            }
+        }
+    }).exec(function (err, doc) {
         if (err) {
-            res.json({
-                status: codeStatus.fail,
-                message: "错误"
-            })
+            tools.returnResultFaile(res, "错误")
         } else {
-            var data=[];
+            var data = [];
             doc.forEach(function (value) {
-               if(value._id){
-                   data.push(value);
-               }
+                if (value._id) {
+                    data.push(value);
+                }
             });
-                res.json({
-                    status: codeStatus.suc,
-                    message: "成功",
-                    data: data
-                });
-                res.end()
+            tools.returnResultSuccess(res, data, "成功")
         }
     })
 
@@ -125,30 +115,18 @@ router.post('/addTeacher', function (req, res) {
     if (id === adminId) {
         query.isTeacher = 1
     }
-
-    teachers.find({_id: id}, function (err, doc) {
+    teachers.find({
+        _id: id
+    }, function (err, doc) {
         if (doc.length > 0) {
-            res.json({
-                status: codeStatus.fail,
-                message: "用户已存在",
-                data: []
-            });
-            res.end()
+            tools.returnResultFaile(res, "用户已经提交申请")
         } else {
             teachers.create(query, function (err, doc) {
                 if (err) {
-                    res.json({
-                        status: codeStatus.fail,
-                        message: "错误"
-                    })
+                    tools.returnResultFaile(res, "错误")
                 } else {
-                    res.json({
-                        status: codeStatus.suc,
-                        message: "成功",
-                        data: doc
-                    })
+                    tools.returnResultSuccess(res, doc, "成功")
                 }
-                res.end()
             })
         }
     });
@@ -163,11 +141,7 @@ router.get('/appTeacher', function (req, res) {
 
     query.isTeacher = 0;
     teachers.find(query, function (err, doc) {
-        res.json({
-            status: codeStatus.suc,
-            message: "成功",
-            data: doc,
-        })
+        tools.returnResultSuccess(res, doc, "成功")
     })
 });
 /**
@@ -175,12 +149,12 @@ router.get('/appTeacher', function (req, res) {
  */
 router.post('/confirmTeacher', function (req, res) {
     var query = tools.changeQuery(req.body);
-    teachers.update(query, {"isTeacher": 1}, {multi: true}, function (err, doc) {
-        res.json({
-            status: codeStatus.suc,
-            message: "成功",
-            data: doc,
-        })
+    teachers.update(query, {
+        "isTeacher": 1
+    }, {
+        multi: true
+    }, function (err, doc) {
+        tools.returnResultSuccess(res, doc, "成功")
     })
 });
 /**
@@ -192,16 +166,16 @@ router.get('/course', function (req, res) {
     // 包含id查询
     if (query.teacherId) {
         var id = query.teacherId;
-        query.teacherId = {$in: id}
+        query.teacherId = {
+            $in: id
+        }
     }
-    // populate({path:'teacherId studentsId',select:"name _id"})
-    Course.find(query).populate("teacherId studentsId").limit(5).sort(sort).exec(function (err, doc) {
-        console.log(err);
-        res.json({
-            status: codeStatus.suc,
-            data: doc
-        })
+    Course.find(query).populate({
+        path: 'teacherId studentsId'
+    }).limit(5).sort(sort).exec(function (err, doc) {
+        tools.returnResultSuccess(res, doc, "成功");
     })
+
 });
 /**
  * 添加课程
@@ -209,13 +183,47 @@ router.get('/course', function (req, res) {
 router.post('/addCourse', function (req, res) {
     var query = tools.changeQuery(req.body);
     Course.create(query, function (err, doc) {
-        res.json({
-            status: codeStatus.suc,
-            data: doc,
-            massage: "成功"
-        });
-        res.end();
+        tools.returnResultSuccess(res, doc, "成功")
     })
+});
+
+/**
+ * 筛选可成 screenTable
+ */
+
+router.post('/screenTable', function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var sort = "-date";
+    var pageSize=5,pageNumer=1,skip=0;
+    if (query.studentsId) {
+        query.studentsId = {
+            $in: query.studentsId
+        }
+    }
+    if(query.date){
+        var startTime=query.date[0];
+        var endTime=query.date[1];
+        query.date = {
+            $gte:startTime,$lte:endTime
+        } 
+    }
+    if(query.pageSize){
+        pageSize=query.pageSize
+        delete query.pageSize;
+    }
+    if(query.pageNumer){
+        pageNumer=query.pageNumer
+        skip=(pageNumer-1)*pageSize
+        delete query.pageNumer;
+    }
+    Course.count(query).exec(function(err,value){
+        Course.find(query).skip(skip).populate({
+            path: 'teacherId studentsId'
+        }).limit(pageSize).sort(sort).exec(function (err, doc) {
+            tools.returnResultSuccess(res, doc, "筛选成功",value)
+        })
+    })
+    
 });
 
 /**
@@ -225,11 +233,17 @@ router.get('/student', function (req, res) {
     var query = {};
     var sort = "date";
     Student.find(query).exec(function (err, doc) {
-        res.json({
-            status: codeStatus.suc,
-            data: doc,
-            massage: "成功"
-        })
+        tools.returnResultSuccess(res, doc, "成功")
+    })
+});
+
+/**
+ * 获取老师信息
+ */
+router.get('/getTeacherInfo', function (req, res) {
+    var query = tools.changeQuery(req.query);
+    teachers.find(query).exec(function (err, doc) {
+        tools.returnResultSuccess(res, doc, "获得老师信息成功")
     })
 });
 
@@ -240,13 +254,11 @@ router.get("/warning", function (req, res) {
     var query = tools.changeQuery(req.query);
     var sort = "-date";
     // 包含id查询
-    Warning.find(query).limit(5).sort(sort).exec(function (err, doc) {
-        res.json({
-            status: codeStatus.suc,
-            data: doc,
-            massage: "成功"
-        });
-        res.end();
+    Warning.find(query).populate({
+        path: "adminId",
+        select: "name"
+    }).sort(sort).exec(function (err, doc) {
+        tools.returnResultSuccess(res, doc, "成功")
     })
 });
 /**
@@ -256,23 +268,13 @@ router.get("/warning", function (req, res) {
  */
 router.post("/warning", function (req, res) {
     var query = tools.changeQuery(req.body);
-    var state=tools.verificationAdmin(query.adminId);
-    if(!state){
-        res.json({
-            status: codeStatus.fail,
-            data:[],
-            message: "无权限",
-        });
-        res.end()
+    var state = tools.verificationAdmin(query.adminId);
+    if (!state) {
+        tools.returnResultFaile(res, "无权限")
     }
     // 包含id查询
     Warning.create(query, function (err, doc) {
-        res.json({
-            status: codeStatus.suc,
-            data: doc,
-            message: "成功",
-        });
-        res.end();
+        tools.returnResultSuccess(res, doc, "成功");
     })
 });
 
@@ -282,33 +284,38 @@ router.post("/warning", function (req, res) {
 router.post("/dismissTeacher", function (req, res) {
     var query = tools.changeQuery(req.body);
     var adId = query.adminId.toString();
-    var teacher = {_id: query.teacherId};
+    var teacher = {
+        _id: query.teacherId
+    };
     if (adId == adminId) {
-        User.update(teacher,{$set: {isAdmin: 100}}, function (err, doc) {
+        User.update(teacher, {
+            $set: {
+                isAdmin: 100
+            }
+        }, function (err, doc) {
             if (err) {
-                res.json({
-                    status: codeStatus.fail,
-                    data:[],
-                    message: "删除数据失败"
-                });
-                res.end();
+                tools.returnResultFaile(res, "失败")
             } else {
-                    res.json({
-                        status: codeStatus.fail,
-                        data: [],
-                        message: "辞退成功"
-                    });
-                    res.end()
+                tools.returnResultSuccess(res, doc, "辞退成功")
             }
         })
     } else {
-        res.json({
-            status: codeStatus.fail,
-            data:[],
-            message: "无权限"
-        });
-        res.end();
+        tools.returnResultFaile(res, "无权限")
     }
+
+});
+
+/**
+ * 授权老师
+ */
+
+router.post("/recoveryteUser", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    User.update(query, {
+        isAdmin: 2
+    }).exec(function (err, doc) {
+        tools.returnResultSuccess(res, doc, "用户授权成功")
+    })
 
 });
 
@@ -316,16 +323,12 @@ router.post("/dismissTeacher", function (req, res) {
  * 获取用户列表
  */
 
-router.get("/userList",function (req, res) {
+router.get("/userList", function (req, res) {
 
-    var query=tools.changeQuery(req.query)||{};
-    var sort="isAdmin";
+    var query = tools.changeQuery(req.query) || {};
+    var sort = "isAdmin";
     User.find(query).sort(sort).exec(function (err, doc) {
-        res.json({
-            status:codeStatus.suc,
-            message:"获取用户成功",
-            data:doc
-        })
+        tools.returnResultSuccess(res, doc, "获取用户成功");
     })
 
 });
@@ -334,15 +337,11 @@ router.get("/userList",function (req, res) {
  * 删除用户
  */
 
-router.post("/deleteUser",function (req, res) {
+router.post("/deleteUser", function (req, res) {
 
-    var query=tools.changeQuery(req.body);
+    var query = tools.changeQuery(req.body);
     User.remove(query).exec(function (err, doc) {
-        res.json({
-            status:codeStatus.suc,
-            message:"删除用户成功",
-            data:doc
-        })
+        tools.returnResultSuccess(res, doc, "删除用户成功");
     })
 
 });

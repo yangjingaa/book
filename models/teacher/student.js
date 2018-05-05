@@ -6,7 +6,7 @@ var Student=new Schema({
     "name": String,
     "age": String,
     "hobby": String,
-    "grade": String,
+    "grade": Number,
     "character": String,
     "introduction": String
 });
