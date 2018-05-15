@@ -81,7 +81,7 @@ router.post('/register', function (req, res) {
  * 获得老师列表
  */
 router.get('/teacher', function (req, res) {
-    var query = tools.changeQuery(req.body);
+    var query = tools.changeQuery(req.query);
     query.isTeacher = 1;
     teachers.find(query).populate({
         path: '_id',
@@ -112,24 +112,19 @@ router.get('/teacher', function (req, res) {
 router.post('/addTeacher', function (req, res) {
     var query = tools.changeQuery(req.body);
     var id = query._id;
-    if (id === adminId) {
-        query.isTeacher = 1
-    }
-    teachers.find({
+    teachers.update({
         _id: id
-    }, function (err, doc) {
-        if (doc.length > 0) {
-            tools.returnResultFaile(res, "用户已经提交申请")
-        } else {
-            teachers.create(query, function (err, doc) {
-                if (err) {
-                    tools.returnResultFaile(res, "错误")
-                } else {
-                    tools.returnResultSuccess(res, doc, "成功")
-                }
+    },query,function(err,doc){
+        if(doc.n==1){
+           tools.returnResultSuccess(res, doc, "更新成功") 
+        }else{
+            teachers.create(query,function(err,doc){
+                tools.returnResultSuccess(res, doc, "提交成功")
             })
         }
+        
     });
+    
 
 
 });
@@ -138,7 +133,6 @@ router.post('/addTeacher', function (req, res) {
  */
 router.get('/appTeacher', function (req, res) {
     var query = tools.changeQuery(req.body);
-
     query.isTeacher = 0;
     teachers.find(query, function (err, doc) {
         tools.returnResultSuccess(res, doc, "成功")
@@ -182,9 +176,41 @@ router.get('/course', function (req, res) {
  */
 router.post('/addCourse', function (req, res) {
     var query = tools.changeQuery(req.body);
-    Course.create(query, function (err, doc) {
-        tools.returnResultSuccess(res, doc, "成功")
+    var studentQuery = {
+        grade: query["grade"]
+    };
+
+
+    Student.find(studentQuery).exec(function (err, doc) {
+        var studentData = doc;
+        var studentId = [];
+        if (studentData.length > 0) {
+            studentData.forEach(function (value, index) {
+                if (index >= 2) return false;
+                studentId.push(value._id);
+            })
+        }
+        query.studentsId = studentId;
+        var dateStr = tools.chackTime(query.date);
+        var dataScree = {
+            teacherId: query.teacherId,
+            date: {
+                $gte: dateStr.startNum,
+                $lt: dateStr.endNum
+            }
+        }
+        Course.count(dataScree).exec(function (err, count) {
+            if (count >= 1) {
+                tools.returnResultFaile(res, "每人每天只能开课一次");
+            } else {
+                Course.create(query, function (err, doc) {
+                    tools.returnResultSuccess(res, doc, "成功")
+                })
+            }
+        })
+
     })
+
 });
 
 /**
@@ -194,43 +220,46 @@ router.post('/addCourse', function (req, res) {
 router.post('/screenTable', function (req, res) {
     var query = tools.changeQuery(req.body);
     var sort = "-date";
-    var pageSize=5,pageNumer=1,skip=0;
+    var pageSize = 5,
+        pageNumer = 1,
+        skip = 0;
     if (query.studentsId) {
         query.studentsId = {
             $in: query.studentsId
         }
     }
-    if(query.date){
-        var startTime=query.date[0];
-        var endTime=query.date[1];
+    if (query.date) {
+        var startTime = query.date[0];
+        var endTime = query.date[1];
         query.date = {
-            $gte:startTime,$lte:endTime
-        } 
+            $gte: startTime,
+            $lte: endTime
+        }
     }
-    if(query.pageSize){
-        pageSize=query.pageSize
+    if (query.pageSize) {
+        pageSize = query.pageSize
         delete query.pageSize;
     }
-    if(query.pageNumer){
-        pageNumer=query.pageNumer
-        skip=(pageNumer-1)*pageSize
+    if (query.pageNumer) {
+        pageNumer = query.pageNumer
+        skip = (pageNumer - 1) * pageSize
         delete query.pageNumer;
     }
-    Course.count(query).exec(function(err,value){
+    Course.count(query).exec(function (err, value) {
         Course.find(query).skip(skip).populate({
             path: 'teacherId studentsId'
         }).limit(pageSize).sort(sort).exec(function (err, doc) {
-            tools.returnResultSuccess(res, doc, "筛选成功",value)
+            tools.returnResultSuccess(res, doc, "筛选成功", value)
         })
     })
-    
+
 });
 
 /**
  * 获取学生列表
  */
 router.get('/student', function (req, res) {
-    var query = {};
+    var query = tools.changeQuery(req.query);
     var sort = "date";
     Student.find(query).exec(function (err, doc) {
         tools.returnResultSuccess(res, doc, "成功")
@@ -344,6 +373,29 @@ router.post("/deleteUser", function (req, res) {
         tools.returnResultSuccess(res, doc, "删除用户成功");
     })
 
+});
+
+/**
+ * 提升老师授课等级 upLectureGrad
+ */
+
+router.post("/upLectureGrad", function (req, res) {
+
+    var query = tools.changeQuery(req.body);
+    var findQuery={
+        _id:query._id
+    };
+    var updateQuery={
+        grade:query.grade,
+    };
+    teachers.update(findQuery,updateQuery).exec(function (err, doc) {
+        if(doc.nModified===0){
+            tools.returnResultFaile(res, "等级一致，修改失败"); 
+        }
+        teachers.find(findQuery).exec(function(err,doc){
+            tools.returnResultSuccess(res, doc, "修改成功");
+        })
+    })
 });
 
 module.exports = router;

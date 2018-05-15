@@ -10,8 +10,8 @@ function changeQuery(queryData) {
     var result = {};
     if (queryData) {
         for (var key in queryData) {
-            if (!queryData[key]) continue
-            if (queryData[key] && queryData[key].length == 0) continue;
+            if (!queryData[key]&&queryData[key]!==0) continue;
+            if (Array.isArray(queryData[key])&& queryData[key].length == 0) continue;
             result[key] = queryData[key]
         }
     }
@@ -82,9 +82,29 @@ function returnResultSuccess(res, data, message, count) {
 }
 
 
+/**
+ * 返回当天时间戳
+ * 
+ * @param {any} num 
+ * @returns 
+ */
+function chackTime(num){
+    var time=new Date(num);
+    var date=time.toLocaleDateString();
+    var day=time.getDate(); 
+    var dataArr=date.split("-");
+    var endTime=dataArr[0]+"-"+dataArr[1]+"-"+(day+1); 
+    return{
+        startNum:new Date(date).getTime(),
+        endNum:new Date(endTime).getTime(),
+    } 
+};
+
+
 module.exports = {
     changeQuery: changeQuery,
     verificationAdmin: verificationAdmin,
     returnResultFaile: returnResultFaile,
     returnResultSuccess: returnResultSuccess,
+    chackTime:chackTime,
 };

@@ -3,6 +3,7 @@ var Schema=mongoose.Schema;
 var dbTeacher=require('../teacherConnect');
 
 var Course=new Schema({
+    "name":String,
     "date":{type:Number,default:new Date().getTime()},
     "teacherId":{type:Schema.Types.ObjectId,ref:"teachers"},
     "studentsId":[{type:Schema.Types.ObjectId,ref:"students"}],//学生列表
