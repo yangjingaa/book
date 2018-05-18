@@ -6,6 +6,7 @@ var sportUser = require("../models/sport/user");
 var Equipment = require("../models/sport/equipment");
 var Reserves = require("../models/sport/reserves");
 var IdCard = require("../models/sport/vipCard");
+var Coach = require("../models/sport/coach");
 
 var managerId = "5add6ece1e1136149c2aac7b";
 
@@ -562,6 +563,73 @@ router.post("/buyCards", function (req, res) {
 
 });
 
+/**
+ * 修改个人信息
+ */
+router.post("/changeInfo", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var findQuery={
+        _id:query._id
+    };
+    sportUser.update(findQuery,query).exec(function (err, doc) {
+        if(err){
+            tools.returnResultFaile(res,"修改失败");
+        }else {
+            if(doc.nModified>0){
+                tools.returnResultSuccess(res,doc,"修改成功")
+            }else {
+                tools.returnResultFaile(res,"修改失败");
+            }
+        }
+    })
+
+});
+
+/**
+ * 添加教练
+ */
+router.post("/addCoach", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var findQuery={
+        IDCard:query.IDCard
+    };
+    if(query._id){
+        Coach.update(findQuery,query).exec(function (err, doc) {
+            tools.returnResultSuccess(res,doc,"修改成功");
+        })
+    }else {
+        Coach.find(findQuery).exec(function (err, doc) {
+            if(err){
+                tools.returnResultFaile(res,"添加失败");
+            }else {
+                if(doc.length>0){
+                    tools.returnResultFaile(res,"改用户已存在");
+                }else {
+                    Coach.create(query,function (err,doc) {
+                        tools.returnResultSuccess(res,doc,"添加成功");
+                    })
+                }
+            }
+        })
+    }
+
+
+});
+
+/**
+ * 获得教练列表
+ */
+router.post("/getCoach", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    Coach.find(query).exec(function (err, doc) {
+        if(err){
+            tools.returnResultFaile(res,"获取教练列表失败");
+        }else {
+            tools.returnResultSuccess(res,doc,"获取教练列表成功")
+        }
+    })
+
+});
 
 module.exports = router;
 

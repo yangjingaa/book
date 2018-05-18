@@ -8,7 +8,7 @@ var Course = require("../models/teacher/course");
 var Student = require("../models/teacher/student");
 var Warning = require("../models/teacher/warning");
 
-var adminId = "5ad5fca38035fe33e861b3b9"; //管理员id
+var adminId = "5ad5fca38035fe33e861b3b9"; //管理员id5ad5fca38035fe33e861b3b9
 /**
  * 登录
  */
@@ -26,7 +26,6 @@ router.post('/login', function (req, res) {
                 status: codeStatus.fail,
                 message: "错误"
             });
-            res.end()
         } else {
             if (doc.length > 0) {
                 res.json({
@@ -34,14 +33,14 @@ router.post('/login', function (req, res) {
                     data: doc,
                     message: "成功"
                 });
-                res.end();
+                 
             } else {
                 res.json({
                     status: codeStatus.fail,
                     message: "用户不存在或者密码错误",
                     data: []
                 });
-                res.end();
+                 
             }
 
         }
