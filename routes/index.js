@@ -1,6 +1,4 @@
-var express = require('express');
-var router = express.Router();
-var User = require("../models/teacher/user");
+
 var tools = require("../public/message/tools");
 var codeStatus = require("../public/message/code-status");
 var teachers = require("../models/teacher/teacher");
@@ -9,6 +7,9 @@ var Student = require("../models/teacher/student");
 var Warning = require("../models/teacher/warning");
 
 var adminId = "5ad5fca38035fe33e861b3b9"; //管理员id5ad5fca38035fe33e861b3b9
+var express = require('express');
+var router = express.Router();
+var User = require("../models/teacher/user");
 /**
  * 登录
  */

@@ -7,6 +7,8 @@ var Equipment = require("../models/sport/equipment");
 var Reserves = require("../models/sport/reserves");
 var IdCard = require("../models/sport/vipCard");
 var Coach = require("../models/sport/coach");
+var Course = require("../models/sport/course");
+
 
 var managerId = "5add6ece1e1136149c2aac7b";
 
@@ -126,11 +128,12 @@ router.post("/addEquipment", function (req, res) {
             message: "无权限操作"
         });
         res.end();
-    }
-    ;
+    };
     //删除权限判断key
     delete query.isAdmin;
-    var name = {name: query.name};
+    var name = {
+        name: query.name
+    };
     Equipment.find(name, function (err, doc) {
         if (err) {
             res.json({
@@ -174,11 +177,12 @@ router.post("/editEquipment", function (req, res) {
             message: "无权限操作"
         });
         res.end();
-    }
-    ;
+    };
     //删除权限判断key
     delete query.isAdmin;
-    Equipment.update({_id: query._id}, query, function (err, doc) {
+    Equipment.update({
+        _id: query._id
+    }, query, function (err, doc) {
         if (err) {
             res.json({
                 status: codeStatus.fail,
@@ -274,7 +278,11 @@ router.post("/addReverse", function (req, res) {
                 });
                 res.end();
             } else {
-                Equipment.update(equQuery, {$inc: {"reserveCount": 1}}).exec(function (err, doc) {
+                Equipment.update(equQuery, {
+                    $inc: {
+                        "reserveCount": 1
+                    }
+                }).exec(function (err, doc) {
                     if (err) {
                         res.json({
                             status: codeStatus.fail,
@@ -306,7 +314,10 @@ router.post("/addReverse", function (req, res) {
 
 router.get("/reservationEquipment", function (req, res) {
     var query = tools.changeQuery(req.query);
-    Reserves.find(query).populate({path: 'equId', select: ""}).exec(function (err, doc) {
+    Reserves.find(query).populate({
+        path: 'equId',
+        select: ""
+    }).exec(function (err, doc) {
         if (err) {
             res.json({
                 status: codeStatus.fail,
@@ -366,7 +377,11 @@ router.post("/cancelRes", function (req, res) {
             });
             res.end();
         } else {
-            Equipment.update(equQuery, {$inc: {"reserveCount": -1}}).exec(function (err, doc) {
+            Equipment.update(equQuery, {
+                $inc: {
+                    "reserveCount": -1
+                }
+            }).exec(function (err, doc) {
                 if (err) {
                     res.json({
                         status: codeStatus.fail,
@@ -401,7 +416,11 @@ router.post("/getCard", function (req, res) {
             });
             res.end()
         } else {
-            query = {_id: {$in: query._id}}
+            query = {
+                _id: {
+                    $in: query._id
+                }
+            }
         }
     }
     var sort = "-crateTime";
@@ -439,7 +458,9 @@ router.post("/addVipCard", function (req, res) {
     }
     //删除权限判断key
     delete query.isAdmin;
-    var name = {name: query.name};
+    var name = {
+        name: query.name
+    };
     IdCard.find(name, function (err, doc) {
         if (err) {
             res.json({
@@ -486,7 +507,9 @@ router.post("/updateCard", function (req, res) {
     }
     //删除权限判断key
     delete query.isAdmin;
-    var name = {_id: query.id};
+    var name = {
+        _id: query.id
+    };
     IdCard.update(name, query, function (err, doc) {
         if (err) {
             res.json({
@@ -539,7 +562,9 @@ router.post("/buyCards", function (req, res) {
                 });
                 res.end();
             } else {
-                sportUser.update(user, {$push: pushCard}, function (err, doc) {
+                sportUser.update(user, {
+                    $push: pushCard
+                }, function (err, doc) {
                     if (err) {
                         res.json({
                             status: codeStatus.fail,
@@ -568,17 +593,17 @@ router.post("/buyCards", function (req, res) {
  */
 router.post("/changeInfo", function (req, res) {
     var query = tools.changeQuery(req.body);
-    var findQuery={
-        _id:query._id
+    var findQuery = {
+        _id: query._id
     };
-    sportUser.update(findQuery,query).exec(function (err, doc) {
-        if(err){
-            tools.returnResultFaile(res,"修改失败");
-        }else {
-            if(doc.nModified>0){
-                tools.returnResultSuccess(res,doc,"修改成功")
-            }else {
-                tools.returnResultFaile(res,"修改失败");
+    sportUser.update(findQuery, query).exec(function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "修改失败");
+        } else {
+            if (doc.nModified > 0) {
+                tools.returnResultSuccess(res, doc, "修改成功")
+            } else {
+                tools.returnResultFaile(res, "修改失败");
             }
         }
     })
@@ -590,23 +615,23 @@ router.post("/changeInfo", function (req, res) {
  */
 router.post("/addCoach", function (req, res) {
     var query = tools.changeQuery(req.body);
-    var findQuery={
-        IDCard:query.IDCard
+    var findQuery = {
+        IDCard: query.IDCard
     };
-    if(query._id){
-        Coach.update(findQuery,query).exec(function (err, doc) {
-            tools.returnResultSuccess(res,doc,"修改成功");
+    if (query._id) {
+        Coach.update(findQuery, query).exec(function (err, doc) {
+            tools.returnResultSuccess(res, doc, "修改成功");
         })
-    }else {
+    } else {
         Coach.find(findQuery).exec(function (err, doc) {
-            if(err){
-                tools.returnResultFaile(res,"添加失败");
-            }else {
-                if(doc.length>0){
-                    tools.returnResultFaile(res,"改用户已存在");
-                }else {
-                    Coach.create(query,function (err,doc) {
-                        tools.returnResultSuccess(res,doc,"添加成功");
+            if (err) {
+                tools.returnResultFaile(res, "添加失败");
+            } else {
+                if (doc.length > 0) {
+                    tools.returnResultFaile(res, "改用户已存在");
+                } else {
+                    Coach.create(query, function (err, doc) {
+                        tools.returnResultSuccess(res, doc, "添加成功");
                     })
                 }
             }
@@ -621,17 +646,110 @@ router.post("/addCoach", function (req, res) {
  */
 router.post("/getCoach", function (req, res) {
     var query = tools.changeQuery(req.body);
+    if (query.name) {
+        query.name = new RegExp(query.name)
+    }
+    console.log(query)
     Coach.find(query).exec(function (err, doc) {
-        if(err){
-            tools.returnResultFaile(res,"获取教练列表失败");
-        }else {
-            tools.returnResultSuccess(res,doc,"获取教练列表成功")
+        if (err) {
+            tools.returnResultFaile(res, "获取教练列表失败");
+        } else {
+            tools.returnResultSuccess(res, doc, "获取教练列表成功")
         }
     })
 
 });
+/**
+ * 添加课程。
+ */
+router.post("/addCourse", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    // var findQuery={
+    //     _id:query.
+    // }
+    Course.create(query, function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "添加课程失败");
+        } else {
+            tools.returnResultSuccess(res, doc, "添加课程成功")
+        }
+    })
+})
+
+/**
+ * 获得课程列表。
+ */
+router.post("/getCourse", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var sort=-"endTime"
+    if(query.userId){
+        query.userId={$in:[query.userId]} 
+    }
+    Course.find(query).populate({
+        path: 'coach',
+        select: "_id name"
+    }).sort(sort).exec(function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "获取课程失败");
+        } else {
+            tools.returnResultSuccess(res, doc, "获取课程成功")
+        }
+    })
+})
+
+/**
+ * 编辑课程信息
+ */
+router.post("/editCourse", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var findQuery = {
+        _id: query._id
+    }
+    Course.update(findQuery, query, function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "更新课程失败");
+        } else {
+            tools.returnResultSuccess(res, doc, "更新课程成功")
+        }
+    })
+})
+
+/**
+ * resCourseList 预约课程
+ */
+
+router.post("/resCourseList", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var findQuery = {
+        _id: query._id
+    }
+    var queryPush = {}
+    queryPush = {
+        $push: {
+            userId: query.userId
+        }
+    }
+    Course.find(findQuery).where("userId").in([query.userId]).exec(function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "预约课程失败");
+        } else {
+            console.log(doc)
+           if(doc.length===0){
+              Course.update(findQuery, queryPush, function (err, doc) {
+                if (err) {
+                    tools.returnResultFaile(res, "预约课程失败");
+                } else {
+                    tools.returnResultSuccess(res, doc, "预约课程成功")
+                }
+            }) 
+           }else{
+            tools.returnResultFaile(res, "预约课程失败,不可重复预约");
+           }
+            
+        }
+    })
+
+})
+
 
 module.exports = router;
-
-
-

@@ -40,8 +40,6 @@ function verificationAdmin(userId) {
     }
     return false
 }
-
-
 /**
  * 返回错误响应
  * @param {any} res 
