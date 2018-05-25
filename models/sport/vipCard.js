@@ -8,7 +8,7 @@ var IdCard = new Schema({
     "crateTime":{type:Number,default:new Date().getTime()},
     "message":String,
     "iName":{type:String,default:"qingtian"},
-    "price":Number,
+    "price":String  ,
 });
 
 module.exports = dbSport.model("vipCards", IdCard);

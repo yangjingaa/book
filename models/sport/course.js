@@ -4,7 +4,7 @@ var dbSport=require('../sportConnect');
 
 var Course = new Schema({
     "name":String,
-    "adress":String,
+    "adress":{type:Number,default:15},
     "startTime":Number,//开始时间
     "endTime":Number,//结束时间
     "coach":{type:Schema.Types.ObjectId,ref:"coachs"},
