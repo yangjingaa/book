@@ -1,10 +1,11 @@
-
 var tools = require("../public/message/tools");
 var codeStatus = require("../public/message/code-status");
 var teachers = require("../models/teacher/teacher");
 var Course = require("../models/teacher/course");
 var Student = require("../models/teacher/student");
 var Warning = require("../models/teacher/warning");
+var Tuijian = require("../models/teacher/tuijian");
+
 
 var adminId = "5ad5fca38035fe33e861b3b9"; //管理员id5ad5fca38035fe33e861b3b9
 var express = require('express');
@@ -34,14 +35,14 @@ router.post('/login', function (req, res) {
                     data: doc,
                     message: "成功"
                 });
-                 
+
             } else {
                 res.json({
                     status: codeStatus.fail,
                     message: "用户不存在或者密码错误",
                     data: []
                 });
-                 
+
             }
 
         }
@@ -83,6 +84,9 @@ router.post('/register', function (req, res) {
 router.get('/teacher', function (req, res) {
     var query = tools.changeQuery(req.query);
     query.isTeacher = 1;
+    if (query.name) {
+        query.name = RegExp(query.name)
+    }
     teachers.find(query).populate({
         path: '_id',
         select: "isAdmin",
@@ -114,17 +118,16 @@ router.post('/addTeacher', function (req, res) {
     var id = query._id;
     teachers.update({
         _id: id
-    },query,function(err,doc){
-        if(doc.n==1){
-           tools.returnResultSuccess(res, doc, "更新成功") 
-        }else{
-            teachers.create(query,function(err,doc){
+    }, query, function (err, doc) {
+        if (doc.n == 1) {
+            tools.returnResultSuccess(res, doc, "更新成功")
+        } else {
+            teachers.create(query, function (err, doc) {
                 tools.returnResultSuccess(res, doc, "提交成功")
             })
         }
-        
+
     });
-    
 
 
 });
@@ -134,8 +137,22 @@ router.post('/addTeacher', function (req, res) {
 router.get('/appTeacher', function (req, res) {
     var query = tools.changeQuery(req.body);
     query.isTeacher = 0;
-    teachers.find(query, function (err, doc) {
-        tools.returnResultSuccess(res, doc, "成功")
+    var sort="-time";
+    var pageSize = 5,
+        pageNumer = 1,
+        skip = 0;
+    if (query.pageSize) {
+        pageSize = query.pageSize;
+        delete query.pageSize;
+    }
+    if (query.pageNumer) {
+        pageNumer = query.pageNumer;
+        skip = (pageNumer - 1) * pageSize;
+        delete query.pageNumer;
+    }
+    console.log(query)
+    teachers.find(query).skip(skip).limit(pageSize).sort(sort).exec(function(err, doc) {
+        tools.returnResultSuccess(res, doc, "成功",doc.length)
     })
 });
 /**
@@ -148,7 +165,11 @@ router.post('/confirmTeacher', function (req, res) {
     }, {
         multi: true
     }, function (err, doc) {
-        tools.returnResultSuccess(res, doc, "成功")
+        User.update(query, {
+            "isAdmin": 1
+        }, function (err, doc) {
+            tools.returnResultSuccess(res, doc, "成功")
+        })
     })
 });
 /**
@@ -179,8 +200,11 @@ router.post('/addCourse', function (req, res) {
     var studentQuery = {
         grade: query["grade"]
     };
-
-
+    if (query.admin) {
+        Course.create(query, function (err, doc) {
+            tools.returnResultSuccess(res, doc, "成功")
+        })
+    }
     Student.find(studentQuery).exec(function (err, doc) {
         var studentData = doc;
         var studentId = [];
@@ -245,6 +269,9 @@ router.post('/screenTable', function (req, res) {
         skip = (pageNumer - 1) * pageSize
         delete query.pageNumer;
     }
+    if (query.evaluate) {
+        query.evaluate = {$lte: query.evaluate,$gt:query.evaluate-5}
+    }
     Course.count(query).exec(function (err, value) {
         Course.find(query).skip(skip).populate({
             path: 'teacherId studentsId'
@@ -261,6 +288,9 @@ router.post('/screenTable', function (req, res) {
 router.get('/student', function (req, res) {
     var query = tools.changeQuery(req.query);
     var sort = "date";
+    if (query.name) {
+        query.name = RegExp(query.name)
+    }
     Student.find(query).exec(function (err, doc) {
         tools.returnResultSuccess(res, doc, "成功")
     })
@@ -382,20 +412,157 @@ router.post("/deleteUser", function (req, res) {
 router.post("/upLectureGrad", function (req, res) {
 
     var query = tools.changeQuery(req.body);
-    var findQuery={
-        _id:query._id
+    var findQuery = {
+        _id: query._id
     };
-    var updateQuery={
-        grade:query.grade,
+    var updateQuery = {
+        grade: query.grade,
     };
-    teachers.update(findQuery,updateQuery).exec(function (err, doc) {
-        if(doc.nModified===0){
-            tools.returnResultFaile(res, "等级一致，修改失败"); 
+    teachers.update(findQuery, updateQuery).exec(function (err, doc) {
+        if (doc.nModified === 0) {
+            tools.returnResultFaile(res, "等级一致，修改失败");
         }
-        teachers.find(findQuery).exec(function(err,doc){
+        teachers.find(findQuery).exec(function (err, doc) {
             tools.returnResultSuccess(res, doc, "修改成功");
         })
     })
 });
+
+/**
+ * 获得老师列表
+ */
+router.post("/getTeacherList", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    if (query.name) {
+        query.name = new RegExp(query.name)
+    }
+    teachers.find(query).exec(function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "获取老师列表失败");
+        } else {
+            tools.returnResultSuccess(res, doc, "获取老师列表成功")
+        }
+    })
+
+});
+
+/**
+ * 获得学生列表
+ */
+router.post("/getStudentList", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    if (query.name) {
+        query.name = new RegExp(query.name)
+    }
+    Student.find(query).exec(function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "获取学生列表失败");
+        } else {
+            tools.returnResultSuccess(res, doc, "获取学生列表成功")
+        }
+    })
+
+});
+
+/**
+ * 推荐老师
+ */
+router.post("/tuijianTeacher", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    if (query.userName) {
+        User.find({
+            userName: query.userName,
+            isAdmin: 2,
+        }).exec(function (err, doc) {
+            if (err) {
+                tools.returnResultFaile(res, "推荐失败,系统错误 ");
+            } else {
+                if (doc.length > 0) {
+                    console.log(doc)
+                    query._id = doc[0]._id;
+                    query.name = doc[0].name;
+
+                    Tuijian.create(query, function (err, doc) {
+                        tools.returnResultSuccess(res, doc, "推荐提交成功")
+                    })
+                } else {
+                    tools.returnResultFaile(res, "推荐失败，推荐用户不存在");
+                }
+            }
+        })
+    }
+});
+
+//getTuiJianTeacher 获得推荐的老师 默认获得推荐提交的老师
+
+router.post("/getTuiJianTeacher", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var sort = "-time";
+    var pageSize = 5,
+        pageNumer = 1,
+        skip = 0;
+    if (query.pageSize) {
+        pageSize = query.pageSize;
+        delete query.pageSize;
+    }
+    if (query.pageNumer) {
+        pageNumer = query.pageNumer;
+        skip = (pageNumer - 1) * pageSize;
+        delete query.pageNumer;
+    }
+
+    Tuijian.find(query).skip(skip).populate({
+        path: "tuijian",
+        select: "name",
+    }).limit(pageSize).sort(sort).exec(function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "获取推荐老师失败");
+        } else {
+            var length=doc.length;
+            tools.returnResultSuccess(res, doc, "获取推荐成功",length)
+        }
+    })
+
+});
+//createTuijianTeacher 审核推荐老师 根据传值 更新数据
+router.post("/createTuijianTeacher", function (req, res) {
+    var query = tools.changeQuery(req.body);
+    var updataData = {};
+    var state = query.state;
+    var findQuery = {
+        _id: query._id
+    }
+    if (query.state) {
+        updataData.state = state
+    }
+    Tuijian.update(findQuery, updataData).exec(function (err, doc) {
+        if (err) {
+            tools.returnResultFaile(res, "审核失败");
+        } else {
+            Tuijian.find(findQuery, function (err, doc) {
+                if (state === "shibai") {
+                    tools.returnResultSuccess(res, doc,"操作成功")
+                } else {
+                    var resultData = doc[0];
+                    var data = {
+                        _id: resultData._id,
+                        name: resultData.name,
+                        age: resultData.age,
+                        email: resultData.email,
+                        graduateSchool: resultData.graduateSchool,
+                        address: resultData.address,
+                        isTeacher: 1
+                    }
+                    teachers.create(data, function (err, doc) {
+                        tools.returnResultSuccess(res, doc, "审核成功")
+                    })
+                }
+
+            })
+        }
+    })
+
+});
+
 
 module.exports = router;

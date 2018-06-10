@@ -4,7 +4,7 @@ var options = {
       auto_reconnect: true,
       poolSize: 20
     }
-  }
+  };
 var dbTeacher = mongoose.createConnection("mongodb://localhost/teachers",options);
 
 module.exports = dbTeacher;
