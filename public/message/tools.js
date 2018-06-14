@@ -10,8 +10,8 @@ function changeQuery(queryData) {
     var result = {};
     if (queryData) {
         for (var key in queryData) {
-            if (!queryData[key]&&queryData[key]!==0) continue;
-            if (Array.isArray(queryData[key])&& queryData[key].length == 0) continue;
+            if (!queryData[key] && queryData[key] !== 0) continue;
+            if (Array.isArray(queryData[key]) && queryData[key].length == 0) continue;
             result[key] = queryData[key]
         }
     }
@@ -40,10 +40,11 @@ function verificationAdmin(userId) {
     }
     return false
 }
+
 /**
  * 返回错误响应
- * @param {any} res 
- * @param {any} message 
+ * @param {any} res
+ * @param {any} message
  */
 function returnResultFaile(res, message) {
     res.json({
@@ -56,10 +57,10 @@ function returnResultFaile(res, message) {
 
 /**
  * 返回成功的状态信息
- * 
- * @param {any} res 
- * @param {any} data 
- * @param {any} message 
+ *
+ * @param {any} res
+ * @param {any} data
+ * @param {any} message
  */
 function returnResultSuccess(res, data, message, count) {
     if (count) {
@@ -69,12 +70,12 @@ function returnResultSuccess(res, data, message, count) {
             message: message,
             count: count,
         })
-    }else{
+    } else {
         res.json({
             status: codeStatus.suc,
             data: data,
             message: message,
-        }) 
+        })
     }
 
 }
@@ -82,21 +83,23 @@ function returnResultSuccess(res, data, message, count) {
 
 /**
  * 返回当天时间戳
- * 
- * @param {any} num 
- * @returns 
+ *
+ * @param {any} num
+ * @returns
  */
-function chackTime(num){
-    var time=new Date(num);
-    var date=time.toLocaleDateString();
-    var day=time.getDate(); 
-    var dataArr=date.split("-");
-    var endTime=dataArr[0]+"-"+dataArr[1]+"-"+(day+1); 
-    return{
-        startNum:new Date(date).getTime(),
-        endNum:new Date(endTime).getTime(),
-    } 
+function chackTime(num) {
+    var time = new Date(num);
+    var date = time.toLocaleDateString();
+    var day = time.getDate();
+    var dataArr = date.split("-");
+    var endTime = dataArr[0] + "-" + dataArr[1] + "-" + (day + 1);
+    return {
+        startNum: new Date(date).getTime(),
+        endNum: new Date(endTime).getTime(),
+    }
 };
+
+
 
 
 module.exports = {
@@ -104,5 +107,5 @@ module.exports = {
     verificationAdmin: verificationAdmin,
     returnResultFaile: returnResultFaile,
     returnResultSuccess: returnResultSuccess,
-    chackTime:chackTime,
+    chackTime: chackTime,
 };

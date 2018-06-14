@@ -83,31 +83,46 @@ router.post('/register', function (req, res) {
  */
 router.get('/teacher', function (req, res) {
     var query = tools.changeQuery(req.query);
+    console.log(query)
     query.isTeacher = 1;
     if (query.name) {
         query.name = RegExp(query.name)
     }
+    var sort = "-time";
+    var pageSize = 20,
+        pageNumer = 1,
+        skip = 0;
+    if (query.pageSize) {
+        pageSize = query.pageSize;
+        delete query.pageSize;
+    }
+    if (query.pageNumer) {
+        pageNumer = query.pageNumer;
+        skip = (pageNumer- 1) * pageSize ;
+        delete query.pageNumer;
+    }
     teachers.find(query).populate({
         path: '_id',
         select: "isAdmin",
-        match: {
-            "isAdmin": {
-                $ne: 100
-            }
-        }
-    }).exec(function (err, doc) {
+    }).sort(sort).exec(function (err, doc) {
         if (err) {
             tools.returnResultFaile(res, "错误")
         } else {
             var data = [];
-            doc.forEach(function (value) {
-                if (value._id) {
-                    data.push(value);
+            var number = 0;
+            console.log(skip);
+            doc.forEach(function (value, index) {
+                if (value._id.isAdmin !== 100) {
+                    if (index >= skip && data.length < pageSize) {
+                        data.push(value);
+                    }
+                    number++
                 }
             });
-            tools.returnResultSuccess(res, data, "成功")
+            tools.returnResultSuccess(res, data, "成功", number)
         }
     })
+
 
 });
 /**
@@ -134,10 +149,9 @@ router.post('/addTeacher', function (req, res) {
 /**
  * 获取老师列表
  */
-router.get('/appTeacher', function (req, res) {
+router.post('/appTeacher', function (req, res) {
     var query = tools.changeQuery(req.body);
-    query.isTeacher = 0;
-    var sort="-time";
+    var sort = "-time";
     var pageSize = 5,
         pageNumer = 1,
         skip = 0;
@@ -150,9 +164,8 @@ router.get('/appTeacher', function (req, res) {
         skip = (pageNumer - 1) * pageSize;
         delete query.pageNumer;
     }
-    console.log(query)
-    teachers.find(query).skip(skip).limit(pageSize).sort(sort).exec(function(err, doc) {
-        tools.returnResultSuccess(res, doc, "成功",doc.length)
+    teachers.find(query).skip(skip).limit(pageSize).sort(sort).exec(function (err, doc) {
+        tools.returnResultSuccess(res, doc, "成功", doc.length)
     })
 });
 /**
@@ -160,16 +173,27 @@ router.get('/appTeacher', function (req, res) {
  */
 router.post('/confirmTeacher', function (req, res) {
     var query = tools.changeQuery(req.body);
+    var state=0;
+    if(query.state){
+        state=query.state;
+        delete query.state
+    }
     teachers.update(query, {
-        "isTeacher": 1
+        "isTeacher": 1,
+        "state":state
     }, {
         multi: true
     }, function (err, doc) {
-        User.update(query, {
-            "isAdmin": 1
-        }, function (err, doc) {
-            tools.returnResultSuccess(res, doc, "成功")
-        })
+        if(state===1){
+            User.update(query, {
+                "isAdmin": 1
+            }, function (err, doc) {
+                tools.returnResultSuccess(res, doc, "审核成功")
+            })
+        }else if(state===2){
+            tools.returnResultSuccess(res, doc, "审核不通过")
+        }
+
     })
 });
 /**
@@ -179,12 +203,12 @@ router.get('/course', function (req, res) {
     var query = tools.changeQuery(req.query);
     var sort = "-date";
     // 包含id查询
-    if (query.teacherId) {
-        var id = query.teacherId;
-        query.teacherId = {
-            $in: id
-        }
-    }
+    // if (query.teacherId) {
+    //     var id = query.teacherId;
+    //     query.teacherId = {
+    //         $in: id
+    //     }
+    // }
     Course.find(query).populate({
         path: 'teacherId studentsId'
     }).limit(5).sort(sort).exec(function (err, doc) {
@@ -265,12 +289,12 @@ router.post('/screenTable', function (req, res) {
         delete query.pageSize;
     }
     if (query.pageNumer) {
-        pageNumer = query.pageNumer
-        skip = (pageNumer - 1) * pageSize
+        pageNumer = query.pageNumer;
+        skip = (pageNumer - 1) * pageSize;
         delete query.pageNumer;
     }
     if (query.evaluate) {
-        query.evaluate = {$lte: query.evaluate,$gt:query.evaluate-5}
+        query.evaluate = {$lte: query.evaluate, $gt: query.evaluate - 5}
     }
     Course.count(query).exec(function (err, value) {
         Course.find(query).skip(skip).populate({
@@ -518,8 +542,8 @@ router.post("/getTuiJianTeacher", function (req, res) {
         if (err) {
             tools.returnResultFaile(res, "获取推荐老师失败");
         } else {
-            var length=doc.length;
-            tools.returnResultSuccess(res, doc, "获取推荐成功",length)
+            var length = doc.length;
+            tools.returnResultSuccess(res, doc, "获取推荐成功", length)
         }
     })
 
@@ -531,7 +555,7 @@ router.post("/createTuijianTeacher", function (req, res) {
     var state = query.state;
     var findQuery = {
         _id: query._id
-    }
+    };
     if (query.state) {
         updataData.state = state
     }
@@ -541,7 +565,7 @@ router.post("/createTuijianTeacher", function (req, res) {
         } else {
             Tuijian.find(findQuery, function (err, doc) {
                 if (state === "shibai") {
-                    tools.returnResultSuccess(res, doc,"操作成功")
+                    tools.returnResultSuccess(res, doc, "操作成功")
                 } else {
                     var resultData = doc[0];
                     var data = {
@@ -552,9 +576,11 @@ router.post("/createTuijianTeacher", function (req, res) {
                         graduateSchool: resultData.graduateSchool,
                         address: resultData.address,
                         isTeacher: 1
-                    }
+                    };
                     teachers.create(data, function (err, doc) {
-                        tools.returnResultSuccess(res, doc, "审核成功")
+                        User.update(findQuery,{"isAdmin":1}).exec(function (err,ddd) {
+                            tools.returnResultSuccess(res, ddd, "审核成功")
+                        });
                     })
                 }
 

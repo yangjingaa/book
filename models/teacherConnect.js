@@ -5,6 +5,6 @@ var options = {
       poolSize: 20
     }
   };
-var dbTeacher = mongoose.createConnection("mongodb://localhost/teachers",options);
+var dbTeacher = mongoose.createConnection("mongodb://127.0.0.1/teachers",options);
 
 module.exports = dbTeacher;

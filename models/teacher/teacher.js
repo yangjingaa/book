@@ -19,6 +19,7 @@ var Teacher = new Schema({
         type: Number,
         default: new Date().getTime()
     },
+    "state":{type:Number,default:0},//审核状态 0 未审核 1 审核成功 2 审核失败
     "isTeacher": {
         type: Number,
         default: 0
